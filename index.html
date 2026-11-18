@@ -1,795 +1,493 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Выбор названия — Парный турнир</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Inter & JetBrains Mono -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
-                    colors: {
-                        bgMain: '#0d0f14',
-                        bgCard: '#151922',
-                        bgCardHover: '#1c222e',
-                        borderSubtle: '#262d3d',
-                        accentPrimary: '#6366f1',
-                        accentGlow: 'rgba(99, 102, 241, 0.25)',
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            background-color: #0d0f14;
-            color: #f1f5f9;
-            overflow-x: hidden;
-        }
-        .choice-card {
-            transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
-        }
-        .choice-card:hover {
-            transform: translateY(-3px);
-            border-color: #6366f1;
-            box-shadow: 0 12px 32px -8px rgba(99, 102, 241, 0.28);
-        }
-        .choice-card:active {
-            transform: scale(0.985);
-        }
-        .choice-picked {
-            border-color: #22c55e !important;
-            background-color: rgba(34, 197, 94, 0.12) !important;
-            transform: scale(1.015) !important;
-        }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0d0f14;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #262d3d;
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #3b465e;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Выбор названия</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card: #181b22;
+      --card-hover: #212631;
+      --border: #2a303c;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      background: rgba(15, 17, 21, 0.95);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .title { font-weight: 700; font-size: 16px; }
+    .badge {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: #1f2937;
+      color: var(--muted);
+    }
+    main {
+      flex: 1;
+      max-width: 720px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+    .mode-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .btn {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+      text-align: center;
+    }
+    .btn:hover { background: var(--card-hover); }
+    .btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .btn.primary {
+      background: var(--success);
+      border-color: var(--success);
+      color: #fff;
+      font-size: 15px;
+      padding: 13px;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .progress-wrap {
+      margin-bottom: 18px;
+    }
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .progress-bar {
+      height: 6px;
+      background: var(--card);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.2s ease;
+    }
+    .arena {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      my-auto: 0;
+      flex: 1;
+      align-content: center;
+    }
+    @media (min-width: 600px) {
+      .arena { grid-template-columns: 1fr 1fr; }
+    }
+    .choice-card {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 20px;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.12s, border-color 0.15s, background 0.15s;
+      user-select: none;
+    }
+    .choice-card:hover {
+      border-color: var(--accent);
+      background: var(--card-hover);
+    }
+    .choice-card:active { transform: scale(0.98); }
+    .choice-text {
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .leaderboard {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    .leaderboard th, .leaderboard td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    .leaderboard th { color: var(--muted); font-weight: 600; }
+    .rank-num { font-weight: 700; color: var(--accent); width: 32px; }
+    .status-box {
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 14px;
+      background: #1f2937;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    .status-ok { border-color: var(--success); color: #6ee7b7; }
+    .status-err { border-color: var(--danger); color: #fca5a5; }
+    .hidden { display: none !important; }
+  </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-indigo-500/30 selection:text-indigo-200">
+<body>
 
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+<header>
+  <div class="title">Битва названий</div>
+  <div class="badge" id="userBadge">Гость</div>
+</header>
 
-    <!-- Top Navigation / Header -->
-    <header class="border-b border-borderSubtle/80 bg-bgMain/90 backdrop-blur-md sticky top-0 z-30">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/40 flex items-center justify-center text-indigo-400 font-mono font-bold text-sm">
-                    VS
-                </div>
-                <div>
-                    <h1 class="text-base sm:text-lg font-bold tracking-tight text-white leading-tight">Отбор названия</h1>
-                    <p class="text-xs text-slate-400 font-mono" id="header-subtitle">21 вариант • Готово к старту</p>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <button onclick="toggleEditorModal()" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-bgCard hover:bg-bgCardHover text-slate-300 border border-borderSubtle transition flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    <span>Список (<span id="item-count-badge">21</span>)</span>
-                </button>
-                <button onclick="copyTelegramPairs()" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-bgCard hover:bg-bgCardHover text-sky-400 border border-borderSubtle transition flex items-center gap-1.5" title="Скопировать все пары для создания опросов в Telegram">
-                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-                    <span class="hidden sm:inline">Пары для ТГ</span>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Content Area -->
-    <main class="flex-grow flex flex-col justify-center max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10">
-
-        <!-- MODE SELECTOR & ARENA VIEW -->
-        <div id="arena-view" class="w-full flex flex-col gap-6">
-
-            <!-- Mode Tabs & Controls -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-bgCard/70 border border-borderSubtle rounded-xl p-2">
-                <div class="grid grid-cols-2 gap-1.5 flex-grow sm:flex-grow-0">
-                    <button id="btn-mode-full" onclick="switchMode('full')" class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-center">
-                        Все пары (<span id="full-pairs-count">210</span>)
-                    </button>
-                    <button id="btn-mode-swiss" onclick="switchMode('swiss')" class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-center">
-                        Быстрый турнир (~42)
-                    </button>
-                </div>
-
-                <div class="flex items-center justify-between sm:justify-end gap-2 px-1">
-                    <button id="btn-undo" onclick="undoLastChoice()" disabled class="px-3 py-1.5 rounded-lg text-xs font-medium bg-bgMain hover:bg-slate-800 disabled:opacity-35 disabled:pointer-events-none text-slate-300 border border-borderSubtle transition flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
-                        <span>Назад <kbd class="hidden md:inline-block ml-1 px-1 py-0.2 bg-slate-800 rounded text-[10px] font-mono text-slate-400">Z</kbd></span>
-                    </button>
-
-                    <button onclick="finishEarly()" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 transition">
-                        Показать топ сейчас
-                    </button>
-                </div>
-            </div>
-
-            <!-- Progress Bar -->
-            <div class="space-y-2">
-                <div class="flex items-center justify-between text-xs font-mono text-slate-400">
-                    <span id="progress-label">Раунд 1 из 210</span>
-                    <span id="progress-percent">0%</span>
-                </div>
-                <div class="w-full h-2 bg-bgCard rounded-full overflow-hidden border border-borderSubtle/60">
-                    <div id="progress-bar-fill" class="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-300 ease-out" style="width: 0%"></div>
-                </div>
-            </div>
-
-            <!-- Prompt Question -->
-            <div class="text-center pt-1">
-                <span class="inline-block px-2.5 py-1 rounded-full bg-slate-800/80 border border-borderSubtle text-[11px] font-mono uppercase tracking-wider text-slate-400">
-                    Какое название звучит лучше?
-                </span>
-            </div>
-
-            <!-- VS Cards Container -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 relative items-stretch my-1">
-                <!-- Left Card -->
-                <button id="card-left" onclick="pickOption('left')" class="choice-card group relative min-h-[170px] sm:min-h-[240px] w-full rounded-2xl bg-bgCard border-2 border-borderSubtle p-6 sm:p-8 flex flex-col items-center justify-center text-center cursor-pointer focus:outline-none">
-                    <span class="absolute top-3.5 left-4 text-[11px] font-mono text-slate-500 group-hover:text-indigo-400 transition">
-                        [1] или [←]
-                    </span>
-                    <span id="text-left" class="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-snug tracking-tight break-words max-w-full">
-                        StarGuide
-                    </span>
-                    <span class="mt-4 text-xs text-slate-500 opacity-0 group-hover:opacity-100 transition">
-                        Нажми, чтобы выбрать
-                    </span>
-                </button>
-
-                <!-- Center VS Badge -->
-                <div class="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-bgMain border border-borderSubtle items-center justify-center text-xs font-mono font-bold text-slate-400 shadow-xl z-10 pointer-events-none">
-                    OR
-                </div>
-
-                <!-- Right Card -->
-                <button id="card-right" onclick="pickOption('right')" class="choice-card group relative min-h-[170px] sm:min-h-[240px] w-full rounded-2xl bg-bgCard border-2 border-borderSubtle p-6 sm:p-8 flex flex-col items-center justify-center text-center cursor-pointer focus:outline-none">
-                    <span class="absolute top-3.5 right-4 text-[11px] font-mono text-slate-500 group-hover:text-indigo-400 transition">
-                        [2] или [→]
-                    </span>
-                    <span id="text-right" class="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-snug tracking-tight break-words max-w-full">
-                        большая психиатрия
-                    </span>
-                    <span class="mt-4 text-xs text-slate-500 opacity-0 group-hover:opacity-100 transition">
-                        Нажми, чтобы выбрать
-                    </span>
-                </button>
-            </div>
-
-            <!-- Skip / Tie Subtle Option -->
-            <div class="flex justify-center">
-                <button onclick="skipPair()" class="text-xs text-slate-500 hover:text-slate-300 transition py-1.5 px-3 rounded-lg hover:bg-bgCard">
-                    Оба мимо / Пропустить пару (ничья)
-                </button>
-            </div>
-        </div>
-
-        <!-- RESULTS LEADERBOARD VIEW (Hidden initially) -->
-        <div id="results-view" class="hidden w-full flex flex-col gap-6">
-            <div class="bg-bgCard border border-borderSubtle rounded-2xl p-5 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-2">
-                        Итоги голосования
-                    </div>
-                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Рейтинг названий</h2>
-                    <p class="text-sm text-slate-400 mt-1" id="results-summary-text">Проведено сравнений: 210</p>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-2.5">
-                    <button onclick="copyResultsText()" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-lg shadow-indigo-600/20 flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
-                        <span>Скопировать топ</span>
-                    </button>
-                    <button onclick="restartTournament()" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-bgMain hover:bg-slate-800 text-slate-200 border border-borderSubtle transition">
-                        Начать заново
-                    </button>
-                </div>
-            </div>
-
-            <!-- Leaderboard Table -->
-            <div class="bg-bgCard border border-borderSubtle rounded-2xl overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-borderSubtle bg-bgMain/60 text-[11px] font-mono uppercase tracking-wider text-slate-400">
-                                <th class="py-3.5 px-4 w-14 text-center">#</th>
-                                <th class="py-3.5 px-4">Название</th>
-                                <th class="py-3.5 px-4 text-right w-24">Победы</th>
-                                <th class="py-3.5 px-4 text-right w-24 hidden sm:table-cell">Матчи</th>
-                                <th class="py-3.5 px-4 w-36 sm:w-48">Винрейт</th>
-                            </tr>
-                        </thead>
-                        <tbody id="leaderboard-body" class="divide-y divide-borderSubtle/60 text-sm">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- Footer with Keyboard Hint -->
-    <footer class="border-t border-borderSubtle/60 py-4 px-4 text-center text-xs text-slate-500">
-        Управление с клавиатуры: <span class="font-mono text-slate-400">← / 1</span> левый вариант • <span class="font-mono text-slate-400">→ / 2</span> правый вариант • <span class="font-mono text-slate-400">Z / Backspace</span> отменить выбор
-    </footer>
-
-    <!-- EDIT LIST MODAL -->
-    <div id="editor-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-bgCard border border-borderSubtle rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl flex flex-col gap-4 max-h-[90vh]">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h3 class="text-lg font-bold text-white">Редактировать список названий</h3>
-                    <p class="text-xs text-slate-400">Каждое название с новой строки. Изменение сбросит текущий прогресс.</p>
-                </div>
-                <button onclick="toggleEditorModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-
-            <textarea id="names-textarea" rows="12" class="w-full rounded-xl bg-bgMain border border-borderSubtle p-3.5 text-sm text-slate-100 font-sans focus:outline-none focus:border-indigo-500 leading-relaxed resize-none"></textarea>
-
-            <div class="flex items-center justify-between gap-2 pt-1">
-                <button onclick="resetDefaultNames()" class="px-3 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition">
-                    Вернуть исходные 21
-                </button>
-                <div class="flex items-center gap-2">
-                    <button onclick="toggleEditorModal()" class="px-4 py-2 rounded-lg text-xs font-medium bg-bgMain text-slate-300 border border-borderSubtle hover:bg-slate-800 transition">
-                        Отмена
-                    </button>
-                    <button onclick="saveEditedNames()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition">
-                        Применить и начать
-                    </button>
-                </div>
-            </div>
-        </div>
+<main>
+  <!-- Экран выбора режима / старта -->
+  <div id="battleScreen">
+    <div class="mode-switch">
+      <button class="btn active" id="btnSwiss" onclick="setMode('swiss')">Быстрый (~42 пары)</button>
+      <button class="btn" id="btnAll" onclick="setMode('all')">Все пары (210)</button>
     </div>
 
-    <script>
-        // Exact preloaded 21 names from user prompt
-        const DEFAULT_NAMES = [
-            "StarGuide",
-            "большая психиатрия",
-            "Битый байт",
-            "Звёздное гало",
-            "Абортыши Империи",
-            "Хроники хуевых решений",
-            "Пыль звездных систем",
-            "Чем дальше в космос, тем больше уебков",
-            "Точка безумных иллюзий/конструкций",
-            "Останки великих созвездий",
-            "сборище Звездюков",
-            "Звезданутые",
-            "Общество звездных шизофреников",
-            "Зазвездившийся орден",
-            "Лига звезданутых",
-            "Инвалиды под звездной пылью",
-            "Звездный Храм",
-            "Переселенцы с Империи",
-            "Звёздные",
-            "Земной путь",
-            "Звёзды и Корпус"
-        ];
-
-        // Application State
-        let names = [...DEFAULT_NAMES];
-        let mode = 'full'; // 'full' (all pairs) or 'swiss' (4 rounds Swiss-system ~42 pairs)
-        let pairsQueue = [];
-        let currentIndex = 0;
-        let historyStack = []; // Stores { pair: [idxA, idxB], winner: idx | null }
-        let stats = []; // Array of { name, wins, losses, ties, matches, playedAgainst: Set }
-        let swissRound = 1;
-        const SWISS_MAX_ROUNDS = 4; // 4 rounds * 10 matches = 40 matches for 21 items
-        let isAnimating = false;
-
-        // Initialize app on load
-        window.onload = function() {
-            initTournament();
-        };
-
-        /**
-         * Initializes or resets the tournament state based on selected mode
-         */
-        function initTournament() {
-            stats = names.map((name, idx) => ({
-                id: idx,
-                name: name,
-                wins: 0,
-                losses: 0,
-                ties: 0,
-                matches: 0,
-                playedAgainst: new Set()
-            }));
-
-            historyStack = [];
-            currentIndex = 0;
-            swissRound = 1;
-
-            document.getElementById('item-count-badge').textContent = names.length;
-            const totalFullPairs = (names.length * (names.length - 1)) / 2;
-            document.getElementById('full-pairs-count').textContent = totalFullPairs;
-
-            // Update mode button styles
-            const btnFull = document.getElementById('btn-mode-full');
-            const btnSwiss = document.getElementById('btn-mode-swiss');
-            if (mode === 'full') {
-                btnFull.className = "px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-center bg-indigo-600 text-white shadow";
-                btnSwiss.className = "px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-center text-slate-400 hover:text-white";
-                pairsQueue = generateSmartShuffledPairs(names.length);
-            } else {
-                btnSwiss.className = "px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-center bg-indigo-600 text-white shadow";
-                btnFull.className = "px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-center text-slate-400 hover:text-white";
-                pairsQueue = generateSwissRoundPairs();
-            }
-
-            document.getElementById('arena-view').classList.remove('hidden');
-            document.getElementById('results-view').classList.add('hidden');
-            renderCurrentPair();
-        }
-
-        /**
-         * Generates all unique pairs and orders them greedily so the same item
-         * rarely appears in consecutive comparisons.
-         */
-        function generateSmartShuffledPairs(n) {
-            let allPairs = [];
-            for (let i = 0; i < n; i++) {
-                for (let j = i + 1; j < n; j++) {
-                    // Randomize initial left/right side
-                    if (Math.random() < 0.5) {
-                        allPairs.push([i, j]);
-                    } else {
-                        allPairs.push([j, i]);
-                    }
-                }
-            }
-
-            // Fisher-Yates shuffle first
-            for (let i = allPairs.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [allPairs[i], allPairs[j]] = [allPairs[j], allPairs[i]];
-            }
-
-            // Greedy spacing to avoid back-to-back repeats
-            let ordered = [];
-            let lastPair = [-1, -1];
-            while (allPairs.length > 0) {
-                let foundIdx = allPairs.findIndex(p => !lastPair.includes(p[0]) && !lastPair.includes(p[1]));
-                if (foundIdx === -1) foundIdx = 0;
-                const chosen = allPairs.splice(foundIdx, 1)[0];
-                ordered.push(chosen);
-                lastPair = chosen;
-            }
-            return ordered;
-        }
-
-        /**
-         * Generates one round of Swiss-system pairings (matching items with similar scores)
-         */
-        function generateSwissRoundPairs() {
-            // Sort indices by current score (wins + 0.5*ties) + tiny random jitter
-            let indices = stats.map(s => s.id);
-            indices.sort((a, b) => {
-                const scoreA = stats[a].wins + stats[a].ties * 0.5;
-                const scoreB = stats[b].wins + stats[b].ties * 0.5;
-                if (scoreB !== scoreA) return scoreB - scoreA;
-                return Math.random() - 0.5;
-            });
-
-            let paired = new Set();
-            let roundPairs = [];
-
-            for (let i = 0; i < indices.length; i++) {
-                const p1 = indices[i];
-                if (paired.has(p1)) continue;
-
-                // Find closest opponent not yet played against
-                let opponent = -1;
-                for (let j = i + 1; j < indices.length; j++) {
-                    const candidate = indices[j];
-                    if (!paired.has(candidate) && !stats[p1].playedAgainst.has(candidate)) {
-                        opponent = candidate;
-                        break;
-                    }
-                }
-
-                // Fallback if already played all remaining
-                if (opponent === -1) {
-                    for (let j = i + 1; j < indices.length; j++) {
-                        if (!paired.has(indices[j])) {
-                            opponent = indices[j];
-                            break;
-                        }
-                    }
-                }
-
-                if (opponent !== -1) {
-                    paired.add(p1);
-                    paired.add(opponent);
-                    roundPairs.push(Math.random() < 0.5 ? [p1, opponent] : [opponent, p1]);
-                }
-            }
-            return roundPairs;
-        }
-
-        /**
-         * Renders the current comparison pair and updates progress UI
-         */
-        function renderCurrentPair() {
-            const totalEstimated = mode === 'full'
-                ? pairsQueue.length
-                : Math.floor(names.length / 2) * SWISS_MAX_ROUNDS;
-
-            const completedCount = historyStack.length;
-            const currentDisplayNum = Math.min(completedCount + 1, totalEstimated);
-            const pct = totalEstimated > 0 ? Math.min(100, Math.round((completedCount / totalEstimated) * 100)) : 0;
-
-            document.getElementById('progress-label').textContent = mode === 'full'
-                ? `Сравнение ${currentDisplayNum} из ${totalEstimated}`
-                : `Быстрый турнир: раунд ${swissRound}/${SWISS_MAX_ROUNDS} • шаг ${currentDisplayNum} из ~${totalEstimated}`;
-            document.getElementById('progress-percent').textContent = `${pct}%`;
-            document.getElementById('progress-bar-fill').style.width = `${pct}%`;
-            document.getElementById('header-subtitle').textContent = `${names.length} вариантов • ${completedCount} оценок`;
-
-            document.getElementById('btn-undo').disabled = historyStack.length === 0;
-
-            if (currentIndex >= pairsQueue.length) {
-                if (mode === 'swiss' && swissRound < SWISS_MAX_ROUNDS) {
-                    swissRound++;
-                    const nextRoundPairs = generateSwissRoundPairs();
-                    if (nextRoundPairs.length > 0) {
-                        pairsQueue = pairsQueue.concat(nextRoundPairs);
-                    } else {
-                        showResults();
-                        return;
-                    }
-                } else {
-                    showResults();
-                    return;
-                }
-            }
-
-            const [leftIdx, rightIdx] = pairsQueue[currentIndex];
-            document.getElementById('text-left').textContent = names[leftIdx];
-            document.getElementById('text-right').textContent = names[rightIdx];
-        }
-
-        /**
-         * Handles selecting the left or right option
-         */
-        function pickOption(side) {
-            if (isAnimating || currentIndex >= pairsQueue.length) return;
-            isAnimating = true;
-
-            const cardEl = document.getElementById(side === 'left' ? 'card-left' : 'card-right');
-            cardEl.classList.add('choice-picked');
-
-            const [leftIdx, rightIdx] = pairsQueue[currentIndex];
-            const winnerIdx = side === 'left' ? leftIdx : rightIdx;
-            const loserIdx = side === 'left' ? rightIdx : leftIdx;
-
-            // Update stats
-            stats[winnerIdx].wins++;
-            stats[winnerIdx].matches++;
-            stats[winnerIdx].playedAgainst.add(loserIdx);
-
-            stats[loserIdx].losses++;
-            stats[loserIdx].matches++;
-            stats[loserIdx].playedAgainst.add(winnerIdx);
-
-            historyStack.push({
-                pair: [leftIdx, rightIdx],
-                winner: winnerIdx,
-                loser: loserIdx
-            });
-
-            setTimeout(() => {
-                cardEl.classList.remove('choice-picked');
-                currentIndex++;
-                isAnimating = false;
-                renderCurrentPair();
-            }, 140);
-        }
-
-        /**
-         * Handles skipping a pair (records a tie)
-         */
-        function skipPair() {
-            if (isAnimating || currentIndex >= pairsQueue.length) return;
-            const [leftIdx, rightIdx] = pairsQueue[currentIndex];
-
-            stats[leftIdx].ties++;
-            stats[leftIdx].matches++;
-            stats[leftIdx].playedAgainst.add(rightIdx);
-
-            stats[rightIdx].ties++;
-            stats[rightIdx].matches++;
-            stats[rightIdx].playedAgainst.add(leftIdx);
-
-            historyStack.push({
-                pair: [leftIdx, rightIdx],
-                winner: null,
-                loser: null
-            });
-
-            currentIndex++;
-            renderCurrentPair();
-        }
-
-        /**
-         * Reverts the previous comparison choice
-         */
-        function undoLastChoice() {
-            if (isAnimating || historyStack.length === 0) return;
-
-            const lastAction = historyStack.pop();
-            const [leftIdx, rightIdx] = lastAction.pair;
-
-            if (lastAction.winner !== null) {
-                stats[lastAction.winner].wins--;
-                stats[lastAction.winner].matches--;
-                stats[lastAction.winner].playedAgainst.delete(lastAction.loser);
-
-                stats[lastAction.loser].losses--;
-                stats[lastAction.loser].matches--;
-                stats[lastAction.loser].playedAgainst.delete(lastAction.winner);
-            } else {
-                stats[leftIdx].ties--;
-                stats[leftIdx].matches--;
-                stats[leftIdx].playedAgainst.delete(rightIdx);
-
-                stats[rightIdx].ties--;
-                stats[rightIdx].matches--;
-                stats[rightIdx].playedAgainst.delete(leftIdx);
-            }
-
-            currentIndex--;
-            renderCurrentPair();
-        }
-
-        /**
-         * Switches between Full Round-Robin and Quick Swiss mode
-         */
-        function switchMode(newMode) {
-            if (mode === newMode) return;
-            mode = newMode;
-            initTournament();
-            showToast(mode === 'full' ? 'Режим: все уникальные пары' : 'Режим: быстрый швейцарский турнир');
-        }
-
-        /**
-         * Ends the session early and calculates rankings from matches played so far
-         */
-        function finishEarly() {
-            if (historyStack.length === 0) {
-                showToast('Сделай хотя бы пару выборов, чтобы сформировать рейтинг');
-                return;
-            }
-            showResults();
-        }
-
-        /**
-         * Displays the final ranked leaderboard
-         */
-        function showResults() {
-            document.getElementById('arena-view').classList.add('hidden');
-            document.getElementById('results-view').classList.remove('hidden');
-
-            document.getElementById('results-summary-text').textContent =
-                `Проведено сравнений: ${historyStack.length} • Вариантов в списке: ${names.length}`;
-
-            const ranked = getRankedList();
-            const tbody = document.getElementById('leaderboard-body');
-            tbody.innerHTML = '';
-
-            ranked.forEach((item, index) => {
-                const rank = index + 1;
-                const winRate = item.matches > 0 ? Math.round(((item.wins + item.ties * 0.5) / item.matches) * 100) : 0;
-
-                let rankBadge = `<span class="font-mono text-slate-500">${rank}</span>`;
-                let rowHighlight = 'hover:bg-bgCardHover/60';
-                if (rank === 1) {
-                    rankBadge = `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 font-mono font-bold text-xs border border-amber-500/40">1</span>`;
-                    rowHighlight = 'bg-amber-500/[0.04] hover:bg-amber-500/[0.08]';
-                } else if (rank === 2) {
-                    rankBadge = `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-300/20 text-slate-200 font-mono font-bold text-xs border border-slate-400/40">2</span>`;
-                } else if (rank === 3) {
-                    rankBadge = `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-700/25 text-orange-300 font-mono font-bold text-xs border border-orange-500/40">3</span>`;
-                }
-
-                const tr = document.createElement('tr');
-                tr.className = `transition ${rowHighlight}`;
-                tr.innerHTML = `
-                    <td class="py-3.5 px-4 text-center">${rankBadge}</td>
-                    <td class="py-3.5 px-4 font-semibold text-white">${escapeHtml(item.name)}</td>
-                    <td class="py-3.5 px-4 text-right font-mono text-emerald-400 font-semibold">${item.wins}</td>
-                    <td class="py-3.5 px-4 text-right font-mono text-slate-400 hidden sm:table-cell">${item.matches}</td>
-                    <td class="py-3.5 px-4">
-                        <div class="flex items-center gap-2.5">
-                            <div class="flex-grow h-1.5 bg-bgMain rounded-full overflow-hidden">
-                                <div class="h-full bg-indigo-500 rounded-full" style="width: ${winRate}%"></div>
-                            </div>
-                            <span class="font-mono text-xs text-slate-300 w-9 text-right">${winRate}%</span>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        /**
-         * Sorts items by Win Rate, then total wins
-         */
-        function getRankedList() {
-            return [...stats].sort((a, b) => {
-                const rateA = a.matches > 0 ? (a.wins + a.ties * 0.5) / a.matches : 0;
-                const rateB = b.matches > 0 ? (b.wins + b.ties * 0.5) / b.matches : 0;
-                if (Math.abs(rateB - rateA) > 0.0001) return rateB - rateA;
-                if (b.wins !== a.wins) return b.wins - a.wins;
-                return a.losses - b.losses;
-            });
-        }
-
-        function restartTournament() {
-            initTournament();
-        }
-
-        /**
-         * Editor Modal Controls
-         */
-        function toggleEditorModal() {
-            const modal = document.getElementById('editor-modal');
-            const isHidden = modal.classList.contains('hidden');
-            if (isHidden) {
-                document.getElementById('names-textarea').value = names.join('\n');
-                modal.classList.remove('hidden');
-            } else {
-                modal.classList.add('hidden');
-            }
-        }
-
-        function resetDefaultNames() {
-            document.getElementById('names-textarea').value = DEFAULT_NAMES.join('\n');
-        }
-
-        function saveEditedNames() {
-            const raw = document.getElementById('names-textarea').value;
-            const parsed = raw.split('\n').map(s => s.trim()).filter(s => s.length > 0);
-            // Deduplicate while preserving order
-            const unique = [...new Set(parsed)];
-
-            if (unique.length < 2) {
-                showToast('Нужно минимум 2 уникальных названия');
-                return;
-            }
-
-            names = unique;
-            toggleEditorModal();
-            initTournament();
-            showToast(`Список обновлён (${names.length} вариантов)`);
-        }
-
-        /**
-         * Copies the ranked results to clipboard
-         */
-        function copyResultsText() {
-            const ranked = getRankedList();
-            const lines = ranked.map((item, idx) => {
-                const winRate = item.matches > 0 ? Math.round(((item.wins + item.ties * 0.5) / item.matches) * 100) : 0;
-                return `${idx + 1}. ${item.name} — ${winRate}% (${item.wins}/${item.matches})`;
-            });
-            const output = `🏆 Итоги отбора названия:\n\n` + lines.join('\n');
-            copyToClipboard(output, 'Рейтинг скопирован в буфер обмена');
-        }
-
-        /**
-         * Generates all unique pairs formatted cleanly for Telegram polls and copies them
-         */
-        function copyTelegramPairs() {
-            const pairs = generateSmartShuffledPairs(names.length);
-            const lines = pairs.map((pair, idx) => {
-                return `Опрос #${idx + 1}:\n— ${names[pair[0]]}\n— ${names[pair[1]]}`;
-            });
-            const output = `📋 Все уникальные пары для опросов в Telegram (${pairs.length} шт.):\n\n` + lines.join('\n\n');
-            copyToClipboard(output, `Скопированы все ${pairs.length} пар для Telegram!`);
-        }
-
-        /**
-         * Cross-browser / iframe-safe clipboard copy helper
-         */
-        function copyToClipboard(text, successMsg) {
-            const tempTextarea = document.createElement('textarea');
-            tempTextarea.value = text;
-            tempTextarea.style.position = 'fixed';
-            tempTextarea.style.opacity = '0';
-            document.body.appendChild(tempTextarea);
-            tempTextarea.select();
-            try {
-                document.execCommand('copy');
-                showToast(successMsg);
-            } catch (err) {
-                showToast('Не удалось скопировать текст');
-            }
-            document.body.removeChild(tempTextarea);
-        }
-
-        /**
-         * Non-intrusive toast notification
-         */
-        function showToast(message) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = 'bg-slate-800 border border-indigo-500/40 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-xl shadow-xl transition-all duration-300 transform translate-y-2 opacity-0';
-            toast.textContent = message;
-            container.appendChild(toast);
-
-            requestAnimationFrame(() => {
-                toast.classList.remove('translate-y-2', 'opacity-0');
-            });
-
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-2');
-                setTimeout(() => toast.remove(), 300);
-            }, 2600);
-        }
-
-        function escapeHtml(str) {
-            return str.replace(/[&<>"']/g, function(m) {
-                return ({
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#39;'
-                })[m];
-            });
-        }
-
-        /**
-         * Keyboard Shortcuts: Left/1, Right/2, Z/Backspace
-         */
-        document.addEventListener('keydown', function(e) {
-            // Ignore shortcuts if modal is open
-            if (!document.getElementById('editor-modal').classList.contains('hidden')) return;
-            // Ignore if results screen is active
-            if (document.getElementById('arena-view').classList.contains('hidden')) return;
-
-            if (e.key === 'ArrowLeft' || e.key === '1') {
-                e.preventDefault();
-                pickOption('left');
-            } else if (e.key === 'ArrowRight' || e.key === '2') {
-                e.preventDefault();
-                pickOption('right');
-            } else if (e.key === 'z' || e.key === 'Z' || e.key === 'я' || e.key === 'Я' || e.key === 'Backspace') {
-                e.preventDefault();
-                undoLastChoice();
-            }
-        });
-    </script>
+    <div class="progress-wrap">
+      <div class="progress-info">
+        <span id="stepText">Пара 1 из 42</span>
+        <span id="pctText">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div class="arena">
+      <div class="choice-card" onclick="pick(0)">
+        <div class="choice-text" id="opt0">—</div>
+      </div>
+      <div class="choice-card" onclick="pick(1)">
+        <div class="choice-text" id="opt1">—</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="btnUndo" onclick="undo()" disabled>← Назад</button>
+      <button class="btn" onclick="finishEarly()">Завершить досрочно</button>
+    </div>
+  </div>
+
+  <!-- Экран результатов -->
+  <div id="resultScreen" class="hidden">
+    <div class="status-box" id="syncStatus">Отправка результатов в Google Таблицу...</div>
+    <button class="btn primary hidden" id="btnRetry" onclick="sendToSheets()" style="width:100%; margin-bottom:14px;">Повторить отправку</button>
+
+    <table class="leaderboard">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Название</th>
+          <th>Победы</th>
+          <th>Игры</th>
+        </tr>
+      </thead>
+      <tbody id="resultBody"></tbody>
+    </table>
+
+    <div style="margin-top: 18px;">
+      <button class="btn" style="width:100%" onclick="restart()">Пройти заново</button>
+    </div>
+  </div>
+</main>
+
+<script>
+  // === ВСТАВЬ СВОЮ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT НИЖЕ ===
+  const GOOGLE_SCRIPT_URL = "ВСТАВЬ_СЮДА_ССЫЛКУ_НА_APPS_SCRIPT";
+
+  const NAMES = [
+    "StarGuide",
+    "большая психиатрия",
+    "Битый байт",
+    "Звёздное гало",
+    "Абортыши Империи",
+    "Хроники хуевых решений",
+    "Пыль звездных систем",
+    "Чем дальше в космос, тем больше уебков",
+    "Точка безумных иллюзий/конструкций",
+    "Останки великих созвездий",
+    "сборище Звездюков",
+    "Звезданутые",
+    "Общество звездных шизофреников",
+    "Зазвездившийся орден",
+    "Лига звезданутых",
+    "Инвалиды под звездной пылью",
+    "Звездный Храм",
+    "Переселенцы с Империи",
+    "Звёздные",
+    "Земной путь",
+    "Звёзды и Корпус"
+  ];
+
+  // Инициализация Telegram WebApp
+  const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+  let tgUser = { name: "Аноним (браузер)", username: "" };
+  if (tg) {
+    tg.ready();
+    tg.expand();
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+      const u = tg.initDataUnsafe.user;
+      tgUser.name = [u.first_name, u.last_name].filter(Boolean).join(" ") || "Без имени";
+      tgUser.username = u.username || "";
+    }
+  }
+  document.getElementById("userBadge").textContent = tgUser.username ? "@" + tgUser.username : tgUser.name;
+
+  let mode = "swiss";
+  let stats = {};
+  let history = [];
+  let queue = [];
+  let swissRound = 0;
+  const SWISS_MAX_ROUNDS = 4; // 4 раунда по ~10-11 пар = ~42 сравнения
+  let currentPair = null;
+  let lastPayload = null;
+
+  function initStats() {
+    stats = {};
+    NAMES.forEach(n => stats[n] = { name: n, wins: 0, played: 0 });
+  }
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // Генерация всех 210 пар с анти-повтором подряд
+  function buildAllPairs() {
+    let raw = [];
+    for (let i = 0; i < NAMES.length; i++) {
+      for (let j = i + 1; j < NAMES.length; j++) {
+        raw.push(Math.random() > 0.5 ? [NAMES[i], NAMES[j]] : [NAMES[j], NAMES[i]]);
+      }
+    }
+    shuffle(raw);
+    let ordered = [];
+    while (raw.length > 0) {
+      let last = ordered[ordered.length - 1];
+      let idx = raw.findIndex(p => !last || (!last.includes(p[0]) && !last.includes(p[1])));
+      if (idx === -1) idx = 0;
+      ordered.push(raw.splice(idx, 1)[0]);
+    }
+    return ordered;
+  }
+
+  // Генерация раунда швейцарской системы
+  function buildSwissRound() {
+    let sorted = Object.values(stats).sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return Math.random() - 0.5;
+    });
+    let pairs = [];
+    for (let i = 0; i < sorted.length - 1; i += 2) {
+      const pair = Math.random() > 0.5
+        ? [sorted[i].name, sorted[i + 1].name]
+        : [sorted[i + 1].name, sorted[i].name];
+      pairs.push(pair);
+    }
+    // Нечетный 21-й элемент получает дополнительный матч со случайным соседом из середины
+    const odd = sorted[sorted.length - 1].name;
+    const opp = sorted[Math.floor(sorted.length / 2)].name;
+    pairs.push([odd, opp]);
+    return shuffle(pairs);
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    document.getElementById("btnSwiss").classList.toggle("active", mode === "swiss");
+    document.getElementById("btnAll").classList.toggle("active", mode === "all");
+    restart();
+  }
+
+  function restart() {
+    initStats();
+    history = [];
+    swissRound = 1;
+    queue = mode === "all" ? buildAllPairs() : buildSwissRound();
+    document.getElementById("battleScreen").classList.remove("hidden");
+    document.getElementById("resultScreen").classList.add("hidden");
+    nextPair();
+  }
+
+  function nextPair() {
+    if (queue.length === 0) {
+      if (mode === "swiss" && swissRound < SWISS_MAX_ROUNDS) {
+        swissRound++;
+        queue = buildSwissRound();
+      } else {
+        showResults();
+        return;
+      }
+    }
+    currentPair = queue.shift();
+    document.getElementById("opt0").textContent = currentPair[0];
+    document.getElementById("opt1").textContent = currentPair[1];
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const done = history.length;
+    const total = mode === "all" ? 210 : SWISS_MAX_ROUNDS * 11;
+    const pct = Math.min(100, Math.round((done / total) * 100));
+    document.getElementById("stepText").textContent = `Сравнение ${done + 1} из ~${total}`;
+    document.getElementById("pctText").textContent = `${pct}%`;
+    document.getElementById("progressFill").style.width = `${pct}%`;
+    document.getElementById("btnUndo").disabled = history.length === 0;
+  }
+
+  function pick(idx) {
+    if (!currentPair) return;
+    const winner = currentPair[idx];
+    const loser = currentPair[1 - idx];
+
+    stats[winner].wins += 1;
+    stats[winner].played += 1;
+    stats[loser].played += 1;
+
+    history.push({ pair: currentPair, winner, loser });
+    nextPair();
+  }
+
+  function undo() {
+    if (history.length === 0) return;
+    const last = history.pop();
+    stats[last.winner].wins -= 1;
+    stats[last.winner].played -= 1;
+    stats[last.loser].played -= 1;
+    if (currentPair) queue.unshift(currentPair);
+    currentPair = last.pair;
+    document.getElementById("opt0").textContent = currentPair[0];
+    document.getElementById("opt1").textContent = currentPair[1];
+    updateProgress();
+  }
+
+  function finishEarly() {
+    if (history.length === 0) return;
+    showResults();
+  }
+
+  function showResults() {
+    document.getElementById("battleScreen").classList.add("hidden");
+    document.getElementById("resultScreen").classList.remove("hidden");
+
+    const ranking = Object.values(stats).sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      const wrA = a.played ? a.wins / a.played : 0;
+      const wrB = b.played ? b.wins / b.played : 0;
+      return wrB - wrA;
+    });
+
+    const tbody = document.getElementById("resultBody");
+    tbody.innerHTML = ranking.map((item, idx) => `
+      <tr>
+        <td class="rank-num">${idx + 1}</td>
+        <td><strong>${item.name}</strong></td>
+        <td>${item.wins}</td>
+        <td>${item.played}</td>
+      </tr>
+    `).join("");
+
+    lastPayload = {
+      userName: tgUser.name,
+      username: tgUser.username,
+      mode: mode === "all" ? "Все пары (210)" : "Быстрый турнир",
+      ranking: ranking
+    };
+
+    sendToSheets();
+  }
+
+  async function sendToSheets() {
+    const statusBox = document.getElementById("syncStatus");
+    const retryBtn = document.getElementById("btnRetry");
+    retryBtn.classList.add("hidden");
+
+    if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("ВСТАВЬ_СЮДА")) {
+      statusBox.className = "status-box status-err";
+      statusBox.textContent = "Ссылка на Google Apps Script не указана в коде.";
+      return;
+    }
+
+    statusBox.className = "status-box";
+    statusBox.textContent = "Сохранение результатов в общую таблицу...";
+
+    try {
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(lastPayload)
+      });
+      statusBox.className = "status-box status-ok";
+      statusBox.textContent = "Готово! Твой голос записан в общую таблицу.";
+    } catch (err) {
+      statusBox.className = "status-box status-err";
+      statusBox.textContent = "Ошибка отправки. Проверь интернет и нажми кнопку ниже.";
+      retryBtn.classList.remove("hidden");
+    }
+  }
+
+  // Клавиатура для ПК
+  document.addEventListener("keydown", (e) => {
+    if (document.getElementById("battleScreen").classList.contains("hidden")) return;
+    if (e.key === "ArrowLeft" || e.key === "1") pick(0);
+    if (e.key === "ArrowRight" || e.key === "2") pick(1);
+    if (e.key.toLowerCase() === "z" || e.key === "Backspace") undo();
+  });
+
+  restart();
+</script>
 </body>
 </html>
